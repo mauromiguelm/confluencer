@@ -1,4 +1,4 @@
-### The 3.0 implements reading 384 well plate and IncuCyte data. ###
+### Preparing file for git ###
 
 ### IMPORT LIBRARIES ### 
 
