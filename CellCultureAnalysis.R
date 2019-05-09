@@ -307,20 +307,20 @@ function(is_96 = c(T,F)[2],
          input_df = NULL,
          max_timepoint = NULL){
   
-  # save_image = F,
-  # save_path = getwd(),
-  # save_format = c("PDF", "PNG")
-  # save_image 
-  # save_path
-  # save_format
-  # is_96
-  # input_df
-  # max_timepoint
+ 
+  # is_96 = False if 384 plate, True if 96
+  # input_df = input data frame, with tipical format (readIncuCyteData)
+  # max_timepoint = max_timepoint that should be used in 
+  
+  #FIXME save_format = c("PDF", "PNG") 
+  #FIXME save_image #True if want to save image, needs to be implemented
+  #FIXME # save_path this has to be implemented, path where to save image
+  #FIXME # save_format = option to  save plot, this has to be implemented
+  
   
   # Comment
   #The order of the columns in input dataframe should be (in long format):
   # Well, Time, Conf 
-  
   
   if(hasArg(max_timepoint)) {
     
@@ -332,14 +332,16 @@ function(is_96 = c(T,F)[2],
     
   }
   
-  if(max_time > min(input_df[,'Time']) & max_time < max(input_df[,'Time'])){
+  if(max_time < min(input_df[,'Time']) | max_time > max(input_df[,'Time'])){
     
     stop("max_timepoint not valid")
     
   }
   
   
+  #remove NAs from confluence
   
+  input_df <- input_df[!is.na(input_df$Conf), ]
   
   # Setting useful args for plots
   
@@ -389,6 +391,7 @@ if(is_96 == F){  # adjust graphical parameters, add new plots by colum, in forma
     stop(paste(c("is_96 is not a defined cell culture plate, choose 384 or 96.")))
 }
 
+
 for (row_name in well_order) {
   
   #row_name = well_order[1]
@@ -419,7 +422,72 @@ for (row_name in well_order) {
 }
   }
 
+
+# Function to Filter Growth outliers --------------------------------------
+
+#returns a list including statistics and wells that passed the treshold.
+
+
+filter_growth_outliers <- function(data, time_control = 24){
+  
+  # data format is a long dataframe
+  # the filtering will remove the mean +/- 1 * sd
+  # time_cotrol is the last time point before addition of drugs.
+  # return of this function is a list of wells that pass the quality criteria, together with other statistics
+  
+  if(!require(rcompanion)){
+    
+    stop("rcompanion not installed")
+    
+  }
+  
+  data_384 = data
+  
+  max_time <- max(data_384$Time[data_384$Time <= time_control])
+  
+  # Bellow are two easier ways to subset data, without having to attach variables to environment, both will create the same results
+  
+  # attach(data_384)
+  # new_data_384 <- data_384[ which(Time=='24'),]
+  # detach(data_384)
+  
+  
+  new_data_384 <- data_384[data_384$Time == max_time,] #this uses R indexing of matrices, where [row,col], and by using "data_384$Time == 24", you get the right number of rows
+  
+  new_data_384 <- subset(data_384, Time == max_time) #this uses the subset function
+  
+  
+  Mean_all_wells_time24 <- mean(new_data_384$Conf, na.rm = TRUE)
+  
+  Pre_Filter_Mean <- groupwiseMean(Conf ~ 1, 
+                                   data   = new_data_384, 
+                                   conf   = 0.99, 
+                                   digits = 3)
+  
+  # Variance seen in cells at 384 well plate. Then use this variance and a forward loop to remove wells until this variance is reached
+  # Variance might be cell line dependent
+  
+  sdev <- sd(new_data_384$Conf)
+  
+  subset_data_384 <- subset(data_384, data_384[ data_384$Time == max_time,]$Conf > (Mean_all_wells_time24-sdev) & data_384[ data_384$Time==max_time,]$Conf < (Mean_all_wells_time24+sdev))
+  
+  data <- subset_data_384
+  
+  
+  return_data <- list(filtered_wells = unique(data$Well), summary_stats = Pre_Filter_Mean)
+  
+  # a function in R can only return a single object.
+  # if you omit return, the function will return the last evaluated expression
+  # it is recommended to include return so that we clearly know what is the output of a function
+  # return() can only have one output, hence I created a list with several output within that lsit.
+  
+  return(return_data)
+}
+
 setwd(store_wd)
 
 rm(store_wd)
+
+
+
 
