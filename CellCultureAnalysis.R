@@ -10,9 +10,6 @@ library(reshape2)
 
 store_wd <- getwd()
 
-setwd('\\\\imsbnas.d.ethz.ch\\sauer1\\users\\Mauro\\Cell_culture_data')
-
-
 # Parsing excel processed Tecan data --------------------------------------
 
 Read_TecanData <- function(FileDirectory,
