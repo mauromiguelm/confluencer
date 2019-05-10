@@ -16,10 +16,11 @@ data_384 <- ReadIncuCyteData(FileDirectory = getwd(),
 
 # Creating a function that removes outliers -------------------------------
 
-filter_growth_outliers <- function(data){
+filter_growth_outliers <- function(data, time_control = 24){
   
   #data format is a long dataframe
   # the filtering will remove the mean +/- 1 * sd
+  # time_cotrol is the last time point before addition of drugs.
   
     if(!require(rcompanion)){
       
@@ -29,6 +30,8 @@ filter_growth_outliers <- function(data){
   
     data_384 = data
     
+    max_time <- max(data_384$Time[data_384$Time <= time_control])
+    
     # Bellow are two easier ways to subset data, without having to attach variables to environment, both will create the same results
     
     # attach(data_384)
@@ -36,9 +39,9 @@ filter_growth_outliers <- function(data){
     # detach(data_384)
     
     
-    new_data_384 <- data_384[data_384$Time == 24,] #this uses R indexing of matrices, where [row,col], and by using "data_384$Time == 24", you get the right number of rows
+    new_data_384 <- data_384[data_384$Time == max_time,] #this uses R indexing of matrices, where [row,col], and by using "data_384$Time == 24", you get the right number of rows
     
-    new_data_384 <- subset(data_384, Time == 24) #this uses the subset function
+    new_data_384 <- subset(data_384, Time == max_time) #this uses the subset function
     
     
     Mean_all_wells_time24 <- mean(new_data_384$Conf, na.rm = TRUE)
@@ -51,14 +54,14 @@ filter_growth_outliers <- function(data){
     # Variance seen in cells at 384 well plate. Then use this variance and a forward loop to remove wells until this variance is reached
     # Variance might be cell line dependent
     
-    variance <- var(new_data_384$Conf)
+    sdev <- sd(new_data_384$Conf)
     
-    subset_data_384 <- subset(data_384, data_384[ data_384$Time=='24',]$Conf > (Mean_all_wells_time24-sd) & data_384[ data_384$Time=='24',]$Conf < (Mean_all_wells_time24+sd))
+    subset_data_384 <- subset(data_384, data_384[ data_384$Time == max_time,]$Conf > (Mean_all_wells_time24-sdev) & data_384[ data_384$Time==max_time,]$Conf < (Mean_all_wells_time24+sdev))
     
     data <- subset_data_384
     
     
-    return_data <- list(data = data, summary_stats = Pre_Filter_Mean, variance = variance)
+    return_data <- list(data = data, summary_stats = Pre_Filter_Mean)
     
     # a function in R can only return a single object.
     # if you omit return, the function will return the last evaluated expression
@@ -71,7 +74,6 @@ filter_growth_outliers <- function(data){
 # Plotting results of function --------------------------------------------
 
 subset_data_384 <- filter_growth_outliers(data_384)
-
 
 plot_multi_well(input_df = subset_data_384$data[subset_data_384$data$Time <24,])
 
