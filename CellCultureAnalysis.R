@@ -257,9 +257,9 @@ ReadIncuCyteData <- function(FileDirectory = FileDirectory,
   
   colnames(data) <- time
   
-  data$WELL <- rownames(data)
+  data$Well <- rownames(data)
   
-  data <- tidyr::gather(data, key = Time, value = Conf, -WELL)
+  data <- tidyr::gather(data, key = Time, value = Conf, -Well)
   
   if(read_platemap == T){
     
