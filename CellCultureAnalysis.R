@@ -296,6 +296,52 @@ ReadIncuCyteData <- function(FileDirectory = FileDirectory,
 
 # Function to Plot in 384 or 96 wp ----------------------------------------
 
+# This function plots all wells of a 384 plate grouped together
+
+plot_merge_384 <- 
+  
+  function(data, log_e = T, plot_title = NULL){
+    
+    # data should have three columns, Well, Time and Conf,
+    # and be in the wide/long format
+    
+    #log_e sets to T will log transform confluence
+    
+    if(log_e == T){
+      data[,"Conf"] <-  log(data[,"Conf"])
+    }
+    
+    
+    store_args <- list()
+    
+    store_args$max_time <- max(data$Time)
+      
+    store_args$min_time <- min(data$Time)
+    
+    store_args$max_conf <- max(data$Conf)
+      
+    store_args$min_conf <- min(data$Conf)
+    
+    plot(store_args$min_time:store_args$max_time, 
+         ylim = c(store_args$min_conf, store_args$max_conf),
+         xlim = c(store_args$min_time, store_args$max_time),
+         type = "n",
+         xlab = "Time[h]",
+         ylab = "% Confluence",
+         main = plot_title)
+    
+    time.values <- split(data[,"Time"], data[,"Well"])
+    
+    conf.values <- split(data[,"Conf"], data[,"Well"])
+    
+    
+    
+    mapply(lines, y = conf.values, x = time.values, col = c("blue", "green", "red"),
+           type="o")
+    
+  }
+
+
 # This function takes a long data frame with time, confluence and other variables and plot as 96 or 384 binned plot
 
 plot_multi_well <-
@@ -425,60 +471,116 @@ for (row_name in well_order) {
 #returns a list including statistics and wells that passed the treshold.
 
 
-filter_growth_outliers <- function(data, time_control = 24){
+filter_growth_outliers <- function(plate_name = NULL,
+                                   data,
+                                   time_control = 24,
+                                   slope_cutoff = 0.05,
+                                   p.val_cutoff = 0.05,
+                                   intercept_sd_cutoff = 2.5,
+                                   save_diag_plots = F,
+                                   save_plots_directory = getwd()){
+  
   
   # data format is a long dataframe
   # the filtering will remove the mean +/- 1 * sd
   # time_cotrol is the last time point before addition of drugs.
   # return of this function is a list of wells that pass the quality criteria, together with other statistics
+
+  data_384 = subset(data, Time <= time_control)
   
-  if(!require(rcompanion)){
+  data_384.original = data
+  
+  store_args <- list()
+  
+  store_args$max_time <- max(data_384$Time[data_384$Time <= time_control])
+  
+  store_args$min_time <- min(data_384$Time)
+  
+  store_args$max_conf <- max(data_384$Conf)
+  
+  store_args$min_conf <- min(data_384$Conf)
+  
+  store_args$wells_origin <- unique(data_384$Well)
+  
+  store_args$wells_origin_number <- length(unique(data_384$Well))
+  
+  store_args$wells_exception <- vector()
+  
+  store_args$wells_exception_number <- vector()
+ 
+# low pass filter -------------------------------------------------------
+  
+  # uses regression to remove obvious outliers 
+  
+  store_args$regression_metrics <- 
+  
+  lapply(store_args$wells_origin, function(well) {
     
-    stop("rcompanion not installed")
+    #well = "A2" #FIXME
+    
+    fit <- lm(Conf~Time ,data_384[data_384$Well == well,])
+    
+    fit.summary <- summary(fit)
+    
+    output <- data.frame(
+      
+      Well = well,
+      adj.r.squared = fit.summary[[9]],
+      p.value = fit.summary$coefficients[[8]],
+      slope = fit.summary$coefficients[[2]],
+      intercept = fit.summary$coefficients[[1]]
+    )
+    
+    return(output)
+    
+  })
+  
+  store_args$regression_metrics <- do.call(rbind, store_args$regression_metrics)
+  
+  store_args$wells_exception <- append(store_args$wells_exception,
+                                       as.character(store_args$regression_metrics[store_args$regression_metrics$slope
+                                                                                  < slope_cutoff,"Well"])) 
+  store_args$wells_exception <- append(store_args$wells_exception,
+                                       as.character(store_args$regression_metrics[store_args$regression_metrics$p.value
+                                                                                  > p.val_cutoff,"Well"]))
+  
+  intercept_cutoff <-  mean(store_args$regression_metrics$intercept) + intercept_sd_cutoff * sd(store_args$regression_metrics$intercept)
+  
+  store_args$wells_exception <- append(store_args$wells_exception,
+                                       as.character(store_args$regression_metrics[store_args$regression_metrics$intercept
+                                                                                  > intercept_cutoff,"Well"]))
+  
+  store_args$wells_exception_number <- length(store_args$wells_exception)
+  
+  #save diagnostic plots
+  
+  if(save_diag_plots == T){
+    
+    plate_name_string = paste0(plate_name,"_", gsub(" ", "_",as.character(Sys.time())) ,".png")
+    
+    plate_name_string = gsub(pattern = ":", replacement = "_", x = plate_name_string)
+    
+    png(filename = paste(save_plots_directory, plate_name_string , sep = "/"),
+        width = 1000,
+        height = 1500)
+    
+    par(mfcol = c(3,2), cex = 1.5)
+    plot_merge_384(data = data_384, log_e = F, plot_title = "24h_all")
+    plot_merge_384(data_384[!(data_384$Well %in% store_args$wells_exception), ], log_e = F, plot_title = "24h_filtered")
+    plot_merge_384(data_384[(data_384$Well %in% store_args$wells_exception), ], log_e = F, plot_title = "24h_exceptions")
+    
+    
+    plot_merge_384(data_384.original, log_e = F, plot_title = "fullTime_all")
+    plot_merge_384(data_384.original[!(data_384.original$Well %in% store_args$wells_exception), ], log_e = F, plot_title = "fullTime_filtered")
+    plot_merge_384(data_384.original[(data_384.original$Well %in% store_args$wells_exception), ], log_e = F, plot_title = "fullTime_exceptions")
+    
+    dev.off()
     
   }
   
-  data_384 = data
-  
-  max_time <- max(data_384$Time[data_384$Time <= time_control])
-  
-  # Bellow are two easier ways to subset data, without having to attach variables to environment, both will create the same results
-  
-  # attach(data_384)
-  # new_data_384 <- data_384[ which(Time=='24'),]
-  # detach(data_384)
   
   
-  new_data_384 <- data_384[data_384$Time == max_time,] #this uses R indexing of matrices, where [row,col], and by using "data_384$Time == 24", you get the right number of rows
-  
-  new_data_384 <- subset(data_384, Time == max_time) #this uses the subset function
-  
-  
-  Mean_all_wells_time24 <- mean(new_data_384$Conf, na.rm = TRUE)
-  
-  Pre_Filter_Mean <- groupwiseMean(Conf ~ 1, 
-                                   data   = new_data_384, 
-                                   conf   = 0.99, 
-                                   digits = 3)
-  
-  # Variance seen in cells at 384 well plate. Then use this variance and a forward loop to remove wells until this variance is reached
-  # Variance might be cell line dependent
-  
-  sdev <- sd(new_data_384$Conf)
-  
-  subset_data_384 <- subset(data_384, data_384[ data_384$Time == max_time,]$Conf > (Mean_all_wells_time24-sdev) & data_384[ data_384$Time==max_time,]$Conf < (Mean_all_wells_time24+sdev))
-  
-  data <- subset_data_384
-  
-  
-  return_data <- list(filtered_wells = unique(data$Well), summary_stats = Pre_Filter_Mean)
-  
-  # a function in R can only return a single object.
-  # if you omit return, the function will return the last evaluated expression
-  # it is recommended to include return so that we clearly know what is the output of a function
-  # return() can only have one output, hence I created a list with several output within that lsit.
-  
-  return(return_data)
+  return(store_args)
 }
 
 setwd(store_wd)
