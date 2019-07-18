@@ -124,17 +124,16 @@ Read_PlateMap <- function(FileDirectory,
     
     data.filtered <- data.filtered[unlist(store_indexes),]
     
-    data.filtered <- gather(data.filtered, row, cellline, -cell )
+    data.filtered <- dplyr::gather(data.filtered, row, cellline, -cell )
     
-    data.filtered <- data.filtered %>% mutate(well_number = paste0(cell, row)) %>%
-      select(well_number, cellline)
+    data.filtered <- data.filtered %>% dplyr::mutate(well_number = paste0(cell, row)) %>%
+      dplyr::select(well_number, cellline)
     
     Plate_annotations[,1] <- data.filtered$well_number[1: Plate_size]
     
     Plate_annotations[,n+1] <- data.filtered$cellline[1:Plate_size]
     
     start_position <- start_position + jump
-    
     
     }
   
@@ -178,7 +177,7 @@ Read_Tecan_M200 <- function(FileDirectory,
   
   data <- data[-1,]
   
-  data <- gather(data, key = 'Well', value = "my_vals", -`<>`)
+  data <- dplyr::gather(data, key = 'Well', value = "my_vals", -`<>`)
   
   data <- data %>%
     dplyr::mutate(Well = paste0(`<>`, Well))%>%
@@ -196,8 +195,8 @@ Read_Tecan_M200 <- function(FileDirectory,
       dplyr::mutate(Well = paste0(std, Well))%>%
       dplyr::select(-1)%>%
       na.omit()%>%
-      inner_join(data, by = "Well")%>%
-      mutate(my_vals = as.numeric(my_vals))
+      dplyr::inner_join(data, by = "Well")%>%
+      dplyr::mutate(my_vals = as.numeric(my_vals))
   
       Tecan_data <- list()
   
@@ -324,7 +323,6 @@ plot_merge_384 <-
     
     plot(store_args$min_time:store_args$max_time, 
          ylim = c(store_args$min_conf, store_args$max_conf),
-         xlim = c(store_args$min_time, store_args$max_time),
          type = "n",
          xlab = "Time[h]",
          ylab = "% Confluence",
@@ -481,11 +479,15 @@ filter_growth_outliers <- function(plate_name = NULL,
                                    save_plots_directory = getwd()){
   
   
-  # data format is a long dataframe
+  # data format is a long dataframe, which has the columns "Well", "Conf" and "Time"
   # the filtering will remove the mean +/- 1 * sd
   # time_cotrol is the last time point before addition of drugs.
   # return of this function is a list of wells that pass the quality criteria, together with other statistics
-
+  
+  data$Time <- as.numeric(as.character(data$Time))
+  
+  data$Conf <- as.numeric(as.character(data$Conf))
+  
   data_384 = subset(data, Time <= time_control)
   
   data_384.original = data
@@ -507,6 +509,8 @@ filter_growth_outliers <- function(plate_name = NULL,
   store_args$wells_exception <- vector()
   
   store_args$wells_exception_number <- vector()
+  
+  
  
 # low pass filter -------------------------------------------------------
   
@@ -515,8 +519,6 @@ filter_growth_outliers <- function(plate_name = NULL,
   store_args$regression_metrics <- 
   
   lapply(store_args$wells_origin, function(well) {
-    
-    #well = "A2" #FIXME
     
     fit <- lm(Conf~Time ,data_384[data_384$Well == well,])
     
@@ -534,6 +536,7 @@ filter_growth_outliers <- function(plate_name = NULL,
     return(output)
     
   })
+  
   
   store_args$regression_metrics <- do.call(rbind, store_args$regression_metrics)
   
