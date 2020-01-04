@@ -232,15 +232,17 @@ ReadIncuCyteData <- function(FileDirectory = FileDirectory,
                              FileName = FileName,
                              Number_data_levels = Number_data_levels,
                              start_position = 0,
-                             Plate_size = Plate_size){
+                             Plate_size = Plate_size,
+                             time_output = c("GMT", "elapsed")[2]){
   
   #FileDirectory = getwd()
-  #FileName_IncuCyte = "HCT15_Conf.txt", 
+  #FileName_IncuCyte = "20190925/results/SF539_CL1_P2.txt", 
   # Incucyte data should have row-by-row output format, without experiment details in header
-  #read_platemap = T
+  #read_platemap = F
   #FileName = "PlateMaps_tecan_HCT15_96.xlsx"
   #Number_data_levels = 4
-  #Plate_size = c(96, 384)[1]
+  #Plate_size = c(96, 384)[2]
+  #
   
   # function to read IncuCyte data 
   
@@ -250,7 +252,23 @@ ReadIncuCyteData <- function(FileDirectory = FileDirectory,
                     sep = "\t",
                     skip = 1)
   
-  time <- data$Elapsed
+  
+  if(time_output == "GMT"){
+    
+    time <- data$Date.Time
+    
+    time <- strptime(time, format = c("%m/%d/%Y %I:%M:%S %p"))
+    
+    time <- as.POSIXct(time, tz="GMT") 
+    
+    
+  }else if(time_output == "elapsed"){
+    
+    time <- data$Elapsed
+    
+  }else{
+    stop("Time output not defined, check time_output")
+  }
   
   data <- data.frame(t(data[,3:ncol(data)]), stringsAsFactors = F)
   
