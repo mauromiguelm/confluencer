@@ -292,13 +292,17 @@ ReadIncuCyteData <- function(FileDirectory = FileDirectory,
     
     dataset <- dplyr::inner_join(data, Map_tecan, by = "Well")
     
-    dataset$Time <- as.numeric(dataset$Time)
-      
+    #dataset$Time <- as.numeric(dataset$Time)
+    
+    dataset$Time <- time
+    
     print(paste("IncuCyte Data from experiment:", FileDirectory))
     
     }else{
       
       dataset = data
+      
+      dataset$Time <- time
       
       print(paste("IncuCyte Data from experiment:", FileDirectory))
       
