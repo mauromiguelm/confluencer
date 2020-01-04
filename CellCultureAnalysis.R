@@ -44,7 +44,7 @@ Read_TecanData <- function(FileDirectory,
   
   colnames(data.filtered)[1] <- "Well"
   
-  Tecan_data <- gather(data.filtered, time, conf, -Well) #FIXME why do we gather on time, I shall gather based on the columns displayed in the header,
+  Tecan_data <- tidyr::gather(data.filtered, time, conf, -Well) #FIXME why do we gather on time, I shall gather based on the columns displayed in the header,
   
   #FIXME find a way to gather this information and name the variables properly, else I will always have this problem 
   
@@ -124,7 +124,7 @@ Read_PlateMap <- function(FileDirectory,
     
     data.filtered <- data.filtered[unlist(store_indexes),]
     
-    data.filtered <- dplyr::gather(data.filtered, row, cellline, -cell )
+    data.filtered <- tidyr::gather(data.filtered, row, cellline, -cell )
     
     data.filtered <- data.filtered %>% dplyr::mutate(well_number = paste0(cell, row)) %>%
       dplyr::select(well_number, cellline)
@@ -177,7 +177,7 @@ Read_Tecan_M200 <- function(FileDirectory,
   
   data <- data[-1,]
   
-  data <- dplyr::gather(data, key = 'Well', value = "my_vals", -`<>`)
+  data <- tidyr::gather(data, key = 'Well', value = "my_vals", -`<>`)
   
   data <- data %>%
     dplyr::mutate(Well = paste0(`<>`, Well))%>%
@@ -189,7 +189,7 @@ Read_Tecan_M200 <- function(FileDirectory,
   
     std_curve <- openxlsx::read.xlsx(Plate_mapM200, colNames = T)
   
-    std_curve <- gather(std_curve, key = "Well", value = "abs", -std)
+    std_curve <- tidyr::gather(std_curve, key = "Well", value = "abs", -std)
   
     std_curve <- std_curve %>%
       dplyr::mutate(Well = paste0(std, Well))%>%
@@ -313,13 +313,13 @@ plot_merge_384 <-
     
     store_args <- list()
     
-    store_args$max_time <- max(data$Time)
+    store_args$max_time <- max(data$Time, na.rm = T)
       
-    store_args$min_time <- min(data$Time)
+    store_args$min_time <- min(data$Time, na.rm = T)
     
-    store_args$max_conf <- max(data$Conf)
+    store_args$max_conf <- max(data$Conf, na.rm = T)
       
-    store_args$min_conf <- min(data$Conf)
+    store_args$min_conf <- min(data$Conf, na.rm = T)
     
     plot(store_args$min_time:store_args$max_time, 
          ylim = c(store_args$min_conf, store_args$max_conf),
@@ -573,7 +573,7 @@ filter_growth_outliers <- function(plate_name = NULL,
     plot_merge_384(data_384[(data_384$Well %in% store_args$wells_exception), ], log_e = F, plot_title = "24h_exceptions")
     
     
-    plot_merge_384(data_384.original, log_e = F, plot_title = "fullTime_all")
+    plot_merge_384(data = data_384.original, log_e = F, plot_title = "fullTime_all")
     plot_merge_384(data_384.original[!(data_384.original$Well %in% store_args$wells_exception), ], log_e = F, plot_title = "fullTime_filtered")
     plot_merge_384(data_384.original[(data_384.original$Well %in% store_args$wells_exception), ], log_e = F, plot_title = "fullTime_exceptions")
     
