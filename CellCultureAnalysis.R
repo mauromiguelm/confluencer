@@ -294,7 +294,7 @@ ReadIncuCyteData <- function(FileDirectory = FileDirectory,
     
     #dataset$Time <- as.numeric(dataset$Time)
     
-    dataset$Time <- time
+    #dataset$Time <- time
     
     print(paste("IncuCyte Data from experiment:", FileDirectory))
     
@@ -302,7 +302,7 @@ ReadIncuCyteData <- function(FileDirectory = FileDirectory,
       
       dataset = data
       
-      dataset$Time <- time
+      #dataset$Time <- time
       
       print(paste("IncuCyte Data from experiment:", FileDirectory))
       
@@ -333,31 +333,41 @@ plot_merge_384 <-
     }
     
     
-    store_args <- list()
-    
-    store_args$max_time <- max(data$Time, na.rm = T)
+    if (dim(data)[1] == 0){
+      plot.new()
       
-    store_args$min_time <- min(data$Time, na.rm = T)
-    
-    store_args$max_conf <- max(data$Conf, na.rm = T)
+      warning("the plot is an empty plot, since nrow == 0")
       
-    store_args$min_conf <- min(data$Conf, na.rm = T)
+    }else{
+      
+      store_args <- list()
+      
+      store_args$max_time <- max(data$Time, na.rm = T)
+      
+      store_args$min_time <- min(data$Time, na.rm = T)
+      
+      store_args$max_conf <- max(data$Conf, na.rm = T)
+      
+      store_args$min_conf <- min(data$Conf, na.rm = T)
+      
+      plot(store_args$min_time:store_args$max_time, 
+           ylim = c(store_args$min_conf, store_args$max_conf),
+           type = "n",
+           xlab = "Time[h]",
+           ylab = "% Confluence",
+           main = plot_title)
+      
+      time.values <- split(data[,"Time"], data[,"Well"])
+      
+      conf.values <- split(data[,"Conf"], data[,"Well"])
+      
+      
+      
+      mapply(lines, y = conf.values, x = time.values, col = c("blue", "green", "red"),
+             type="o")
+    }
     
-    plot(store_args$min_time:store_args$max_time, 
-         ylim = c(store_args$min_conf, store_args$max_conf),
-         type = "n",
-         xlab = "Time[h]",
-         ylab = "% Confluence",
-         main = plot_title)
     
-    time.values <- split(data[,"Time"], data[,"Well"])
-    
-    conf.values <- split(data[,"Conf"], data[,"Well"])
-    
-    
-    
-    mapply(lines, y = conf.values, x = time.values, col = c("blue", "green", "red"),
-           type="o")
     
   }
 
@@ -590,14 +600,14 @@ filter_growth_outliers <- function(plate_name = NULL,
         height = 1500)
     
     par(mfcol = c(3,2), cex = 1.5)
-    plot_merge_384(data = data_384, log_e = F, plot_title = "24h_all")
-    plot_merge_384(data_384[!(data_384$Well %in% store_args$wells_exception), ], log_e = F, plot_title = "24h_filtered")
-    plot_merge_384(data_384[(data_384$Well %in% store_args$wells_exception), ], log_e = F, plot_title = "24h_exceptions")
+    plot_merge_384(data = data_384, log_e = F, plot_title = "before_ttm_all")
+    plot_merge_384(data_384[!(data_384$Well %in% store_args$wells_exception), ], log_e = F, plot_title = "before_ttm_pass")
+    plot_merge_384(data_384[(data_384$Well %in% store_args$wells_exception), ], log_e = F, plot_title = "before_ttm_exceptions")
     
     
     plot_merge_384(data = data_384.original, log_e = F, plot_title = "fullTime_all")
-    plot_merge_384(data_384.original[!(data_384.original$Well %in% store_args$wells_exception), ], log_e = F, plot_title = "fullTime_filtered")
-    plot_merge_384(data_384.original[(data_384.original$Well %in% store_args$wells_exception), ], log_e = F, plot_title = "fullTime_exceptions")
+    plot_merge_384(data_384.original[!(data_384.original$Well %in% store_args$wells_exception), ], log_e = F, plot_title = "fullTime_pass")
+    plot_merge_384(data = data_384.original[(data_384.original$Well %in% store_args$wells_exception), ], log_e = F, plot_title = "fullTime_exceptions")
     
     dev.off()
     
