@@ -232,6 +232,7 @@ ReadIncuCyteData <- function(FileDirectory = FileDirectory,
                              FileName = FileName,
                              Number_data_levels = Number_data_levels,
                              start_position = 0,
+                             correct_init_seeding = T,
                              Plate_size = Plate_size,
                              time_output = c("GMT", "elapsed")[2]){
   
@@ -252,6 +253,21 @@ ReadIncuCyteData <- function(FileDirectory = FileDirectory,
                     sep = "\t",
                     skip = 1)
   
+  if(correct_init_seeding == T){
+    
+    data[3:ncol(data)] <- apply(data[3:ncol(data)], 2, function(x){
+      
+      min_val <- x[1]
+      
+      x = x - min_val
+      
+      return(x)
+      
+      })
+   
+    
+    
+  }
   
   if(time_output == "GMT"){
     
@@ -307,10 +323,10 @@ ReadIncuCyteData <- function(FileDirectory = FileDirectory,
       print(paste("IncuCyte Data from experiment:", FileDirectory))
       
     }
-    
-    return(data.frame(dataset))
-    
-    
+  
+  
+  return(data.frame(dataset))
+  
   }
 
 
