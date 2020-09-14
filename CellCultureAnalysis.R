@@ -94,6 +94,8 @@ Read_PlateMap <- function(FileDirectory,
   
   Plate_annotations <- matrix(nrow = Plate_size, ncol = Number_data_levels+1) #store matrix vectors of each level of information in Plate Maps
   
+  store_wd <- getwd()
+  
   setwd(FileDirectory)
   
   data <- openxlsx::read.xlsx(FileName, colNames = T)
@@ -138,6 +140,8 @@ Read_PlateMap <- function(FileDirectory,
     }
   
   Plate_annotations <- Plate_annotations[!is.na(Plate_annotations[,2]),]
+  
+  setwd(store_wd)
   
   return(Plate_annotations)
     
@@ -247,7 +251,7 @@ ReadIncuCyteData <- function(FileDirectory = FileDirectory,
   
   # function to read IncuCyte data 
   
-  data <- read.table(FileName_IncuCyte,
+  data <- read.table(paste0(FileDirectory,FileName_IncuCyte),
                     stringsAsFactors = F,
                     header = T,
                     sep = "\t",
