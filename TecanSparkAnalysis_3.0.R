@@ -10,7 +10,7 @@ library(reshape2)
 
 store_wd <- getwd()
 
-setwd('\\\\imsbnas.d.ethz.ch\\sauer1\\users\\Mauro\\Cell_culture_data')
+setwd('\\\\d.ethz.ch\\groups\\biol\\sysbc\\sauer_1\\users\\Mauro\\Cell_culture_data')
 
 
 # Parsing excel processed Tecan data --------------------------------------
