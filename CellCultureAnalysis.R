@@ -277,10 +277,17 @@ ReadIncuCyteData <- function(FileDirectory = FileDirectory,
     
     time <- data$Date.Time
     
-    time <- strptime(time, format = c("%m/%d/%Y %I:%M:%S %p"))
+    if(all(grepl(data$Date.Time, pattern = "."))){
+      
+      time <- strptime(time, format = c("%d.%m.%Y %H:%M:%S"))
+      
+    }else{
+      
+      time <- strptime(time, format = c("%m/%d/%Y %I:%M:%S %p"))
+      
+    }
     
     time <- as.POSIXct(time, tz="GMT") 
-    
     
   }else if(time_output == "elapsed"){
     
