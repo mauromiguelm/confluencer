@@ -277,7 +277,7 @@ ReadIncuCyteData <- function(FileDirectory = FileDirectory,
     
     time <- data$Date.Time
     
-    if(all(grepl(data$Date.Time, pattern = "."))){
+    if(all(grepl(data$Date.Time, pattern = "\\."))){
       
       time <- strptime(time, format = c("%d.%m.%Y %H:%M:%S"))
       
