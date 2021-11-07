@@ -251,7 +251,7 @@ ReadIncuCyteData <- function(FileDirectory = FileDirectory,
   
   # function to read IncuCyte data 
   
-  data <- read.table(paste0(FileDirectory,FileName_IncuCyte),
+  data <- read.table(paste(FileDirectory,FileName_IncuCyte, sep = "/"),
                     stringsAsFactors = F,
                     header = T,
                     sep = "\t",
@@ -531,17 +531,23 @@ for (row_name in well_order) {
 filter_growth_outliers <- function(plate_name = NULL,
                                    data,
                                    time_control = 24,
-                                   slope_cutoff = 0.05,
-                                   p.val_cutoff = 0.05,
-                                   intercept_sd_cutoff = 2.5,
+                                   slope_cutoff = NULL,
+                                   p.val_cutoff = NULL,
+                                   intercept_sd_cutoff = NULL,
                                    save_diag_plots = F,
-                                   save_plots_directory = getwd()){
+                                   save_plots_directory = getwd(),
+                                   return_stats = F){
   
   
   # data format is a long dataframe, which has the columns "Well", "Conf" and "Time"
-  # the filtering will remove the mean +/- 1 * sd
+  # the filtering will remove the mean +/- mean * sd (sd = incercept_sd_cutoff)
   # time_cotrol is the last time point before addition of drugs.
   # return of this function is a list of wells that pass the quality criteria, together with other statistics
+  
+  #slope_cutoff = 0.05, original vlaues
+  #p.val_cutoff = 0.05, original vlaue
+  #intercept_sd_cutoff = 2.5, original vlaues
+  
   
   data$Time <- as.numeric(as.character(data$Time))
   
@@ -575,9 +581,7 @@ filter_growth_outliers <- function(plate_name = NULL,
   
   # uses regression to remove obvious outliers 
   
-  store_args$regression_metrics <- 
-  
-  lapply(store_args$wells_origin, function(well) {
+  store_args$regression_metrics <- lapply(store_args$wells_origin, function(well) {
     
     fit <- lm(Conf~Time ,data_384[data_384$Well == well,])
     
@@ -596,21 +600,32 @@ filter_growth_outliers <- function(plate_name = NULL,
     
   })
   
-  
+
   store_args$regression_metrics <- do.call(rbind, store_args$regression_metrics)
   
-  store_args$wells_exception <- append(store_args$wells_exception,
-                                       as.character(store_args$regression_metrics[store_args$regression_metrics$slope
-                                                                                  < slope_cutoff,"Well"])) 
-  store_args$wells_exception <- append(store_args$wells_exception,
-                                       as.character(store_args$regression_metrics[store_args$regression_metrics$p.value
-                                                                                  > p.val_cutoff,"Well"]))
+  stats_filter <- data.frame("slope_cutoff" = integer(), "p.val_cutoff" = integer(),"intercept_cutoff" = integer()) 
   
-  intercept_cutoff <-  mean(store_args$regression_metrics$intercept) + intercept_sd_cutoff * sd(store_args$regression_metrics$intercept)
-  
-  store_args$wells_exception <- append(store_args$wells_exception,
-                                       as.character(store_args$regression_metrics[store_args$regression_metrics$intercept
-                                                                                  > intercept_cutoff,"Well"]))
+  if(!is.null(slope_cutoff)){
+    store_args$wells_exception <- append(store_args$wells_exception,
+                                         as.character(store_args$regression_metrics[store_args$regression_metrics$slope
+                                                                                    < slope_cutoff,"Well"]))
+    stats_filter[plate_name,'slope_cutoff'] <- sum(store_args$regression_metrics$slope <= slope_cutoff)
+    
+    }
+  if(!is.null(p.val_cutoff)){
+    store_args$wells_exception <- append(store_args$wells_exception,
+                                         as.character(store_args$regression_metrics[store_args$regression_metrics$p.value
+                                                                                    >= p.val_cutoff,"Well"]))
+    stats_filter[plate_name,'p.val_cutoff'] <- sum(store_args$regression_metrics$p.value>= p.val_cutoff)
+    }
+  if(!is.null( intercept_sd_cutoff)){
+    intercept_cutoff <-  mean(store_args$regression_metrics$intercept) + intercept_sd_cutoff * sd(store_args$regression_metrics$intercept)
+    
+    store_args$wells_exception <- append(store_args$wells_exception,
+                                         as.character(store_args$regression_metrics[store_args$regression_metrics$intercept
+                                                                                    >= intercept_cutoff,"Well"]))
+    stats_filter[plate_name,'intercept_cutoff'] <- sum(store_args$regression_metrics$intercept>= intercept_cutoff)
+    }
   
   store_args$wells_exception_number <- length(store_args$wells_exception)
   
@@ -640,9 +655,11 @@ filter_growth_outliers <- function(plate_name = NULL,
     
   }
   
-  
-  
-  return(store_args)
+  if(return_stats==TRUE){
+    return(list(store,args,stats_arg))
+  }else{
+    return(store_args)
+  }
 }
 
 setwd(store_wd)
