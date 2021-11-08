@@ -360,7 +360,7 @@ plot_merge_384 <-
     }
     
     
-    if (dim(data)[1] == 0){
+    if(dim(data)[1] == 0){
       plot.new()
       
       warning("the plot is an empty plot, since nrow == 0")
@@ -377,19 +377,16 @@ plot_merge_384 <-
       
       store_args$min_conf <- min(data$Conf, na.rm = T)
       
-      plot(store_args$min_time:store_args$max_time, 
+      plot(NULL,
+           xlim=c(store_args$min_time, store_args$max_time), 
            ylim = c(store_args$min_conf, store_args$max_conf),
            type = "n",
            xlab = "Time[h]",
            ylab = "% Confluence",
            main = plot_title)
-      
       time.values <- split(data[,"Time"], data[,"Well"])
       
       conf.values <- split(data[,"Conf"], data[,"Well"])
-      
-      
-      
       mapply(lines, y = conf.values, x = time.values, col = c("blue", "green", "red"),
              type="o")
     }
@@ -603,20 +600,20 @@ filter_growth_outliers <- function(plate_name = NULL,
 
   store_args$regression_metrics <- do.call(rbind, store_args$regression_metrics)
   
-  stats_filter <- data.frame("slope_cutoff" = integer(), "p.val_cutoff" = integer(),"intercept_cutoff" = integer()) 
+  summary_filter <- data.frame("slope_cutoff" = integer(), "p.val_cutoff" = integer(),"intercept_cutoff" = integer()) 
   
   if(!is.null(slope_cutoff)){
     store_args$wells_exception <- append(store_args$wells_exception,
                                          as.character(store_args$regression_metrics[store_args$regression_metrics$slope
                                                                                     < slope_cutoff,"Well"]))
-    stats_filter[plate_name,'slope_cutoff'] <- sum(store_args$regression_metrics$slope <= slope_cutoff)
+    summary_filter[plate_name,'slope_cutoff'] <- sum(store_args$regression_metrics$slope <= slope_cutoff)
     
     }
   if(!is.null(p.val_cutoff)){
     store_args$wells_exception <- append(store_args$wells_exception,
                                          as.character(store_args$regression_metrics[store_args$regression_metrics$p.value
                                                                                     >= p.val_cutoff,"Well"]))
-    stats_filter[plate_name,'p.val_cutoff'] <- sum(store_args$regression_metrics$p.value>= p.val_cutoff)
+    summary_filter[plate_name,'p.val_cutoff'] <- sum(store_args$regression_metrics$p.value>= p.val_cutoff)
     }
   if(!is.null( intercept_sd_cutoff)){
     intercept_cutoff <-  mean(store_args$regression_metrics$intercept) + intercept_sd_cutoff * sd(store_args$regression_metrics$intercept)
@@ -624,7 +621,7 @@ filter_growth_outliers <- function(plate_name = NULL,
     store_args$wells_exception <- append(store_args$wells_exception,
                                          as.character(store_args$regression_metrics[store_args$regression_metrics$intercept
                                                                                     >= intercept_cutoff,"Well"]))
-    stats_filter[plate_name,'intercept_cutoff'] <- sum(store_args$regression_metrics$intercept>= intercept_cutoff)
+    summary_filter[plate_name,'intercept_cutoff'] <- sum(store_args$regression_metrics$intercept>= intercept_cutoff)
     }
   
   store_args$wells_exception_number <- length(store_args$wells_exception)
@@ -642,21 +639,22 @@ filter_growth_outliers <- function(plate_name = NULL,
         height = 1500)
     
     par(mfcol = c(3,2), cex = 1.5)
-    plot_merge_384(data = data_384, log_e = F, plot_title = "before_ttm_all")
-    plot_merge_384(data_384[!(data_384$Well %in% store_args$wells_exception), ], log_e = F, plot_title = "before_ttm_pass")
-    plot_merge_384(data_384[(data_384$Well %in% store_args$wells_exception), ], log_e = F, plot_title = "before_ttm_exceptions")
+    
+    plot_merge_384(data = data_384, log_e = F, plot_title = "All data")
+    plot_merge_384(data_384[!(data_384$Well %in% store_args$wells_exception), ], log_e = F, plot_title = "Clean data")
+    plot_merge_384(data_384[(data_384$Well %in% store_args$wells_exception), ], log_e = F, plot_title = "Exclusions")
     
     
-    plot_merge_384(data = data_384.original, log_e = F, plot_title = "fullTime_all")
-    plot_merge_384(data_384.original[!(data_384.original$Well %in% store_args$wells_exception), ], log_e = F, plot_title = "fullTime_pass")
-    plot_merge_384(data = data_384.original[(data_384.original$Well %in% store_args$wells_exception), ], log_e = F, plot_title = "fullTime_exceptions")
+    plot_merge_384(data = data_384.original, log_e = F, plot_title = "All data")
+    plot_merge_384(data_384.original[!(data_384.original$Well %in% store_args$wells_exception), ], log_e = F, plot_title = "Clean data")
+    plot_merge_384(data = data_384.original[(data_384.original$Well %in% store_args$wells_exception), ], log_e = F, plot_title = "Exclusions")
     
     dev.off()
     
   }
   
   if(return_stats==TRUE){
-    return(list(store,args,stats_arg))
+    return(list(store_args,summary_filter))
   }else{
     return(store_args)
   }
