@@ -237,6 +237,7 @@ ReadIncuCyteData <- function(FileDirectory = FileDirectory,
                              Number_data_levels = Number_data_levels,
                              start_position = 0,
                              correct_init_seeding = T,
+                             skip_first_time = F,
                              Plate_size = Plate_size,
                              time_output = c("GMT", "elapsed")[2]){
   
@@ -256,6 +257,11 @@ ReadIncuCyteData <- function(FileDirectory = FileDirectory,
                     header = T,
                     sep = "\t",
                     skip = 1)
+  
+  if(skip_first_time==T){
+    data = data[-which(data$Elapsed == min(data$Elapsed)),]
+    
+  }
   
   if(correct_init_seeding == T){
     
@@ -554,6 +560,8 @@ filter_growth_outliers <- function(plate_name = NULL,
   
   data_384.original = data
   
+  data_384$Conf <- data_384$Conf+0.0001
+  
   store_args <- list()
   
   store_args$max_time <- max(data_384$Time[data_384$Time <= time_control])
@@ -579,8 +587,10 @@ filter_growth_outliers <- function(plate_name = NULL,
   # uses regression to remove obvious outliers 
   
   store_args$regression_metrics <- lapply(store_args$wells_origin, function(well) {
+    #print(well)
+    #well = 'L22'
     
-    fit <- lm(Conf~Time ,data_384[data_384$Well == well,])
+    fit <- lm((Conf)~Time ,data_384[data_384$Well == well,])
     
     fit.summary <- summary(fit)
     
