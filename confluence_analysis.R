@@ -581,7 +581,6 @@ filter_growth_outliers <- function(plate_name = NULL,
   store_args$wells_exception_number <- vector()
   
   
- 
 # low pass filter -------------------------------------------------------
   
   # uses regression to remove obvious outliers 
@@ -610,7 +609,7 @@ filter_growth_outliers <- function(plate_name = NULL,
 
   store_args$regression_metrics <- do.call(rbind, store_args$regression_metrics)
   
-  summary_filter <- data.frame("slope_cutoff" = integer(), "p.val_cutoff" = integer(),"intercept_cutoff" = integer()) 
+  summary_filter <- data.frame("slope_cutoff" = integer(), "p.val_cutoff" = integer(),"intercept_cutoff" = integer(), "total_exclusions" = integer()) 
   
   if(!is.null(slope_cutoff)){
     store_args$wells_exception <- append(store_args$wells_exception,
@@ -635,6 +634,8 @@ filter_growth_outliers <- function(plate_name = NULL,
     }
   
   store_args$wells_exception_number <- length(store_args$wells_exception)
+  
+  summary_filter[plate_name,'total_exclusions'] = store_args$wells_exception_number
   
   #save diagnostic plots
   

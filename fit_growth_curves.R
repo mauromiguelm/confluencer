@@ -44,9 +44,13 @@ get_growthMetrics <-
     
     growth_rates$tmp_time <-  seq(0,max(data[,1]),length.out = 10000)
     
-    growth_rates$model <- lm(Conf ~ poly(Time, degree), data = growth_rates$tmp_data_format)  #FIXME replace this line by splines ??? 
+    growth_rates$model <- lm(Conf ~ poly(Time, degree), data = growth_rates$tmp_data_format)
     
     growth_rates$pred_Conf <- predict(growth_rates$model, newdata = data.frame(Time = growth_rates$tmp_time))
+    
+    if(min(growth_rates$pred_Conf)<1){
+      growth_rates$pred_Conf <- growth_rates$pred_Conf + abs(min(growth_rates$pred_Conf))+1
+    }
     
     growth_rates$tmp_growth_rate$deriv <- c((diff(growth_rates$pred_Conf)/diff(growth_rates$tmp_time))[1], diff(growth_rates$pred_Conf, differences = 1)/diff(growth_rates$tmp_time,differences = 1))
     
