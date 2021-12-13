@@ -227,6 +227,86 @@ conv_384_96 <- function(data_384){
 }
 
 
+# function to make row switch in case row switch in pipetting mist --------
+
+switch_row <- function(data, cell, plate,row_flip1, row_flip2, cols){
+  
+  data = data
+  
+  grouping <- paste(data$cell, data$source_plate,data$well384)
+  
+  wells_flip1 <- paste0(c(row_flip1), rep(cols, each = 1))
+  
+  wells_flip1 <- paste(cell, plate,wells_flip1)
+  
+  idx_flip1 <- sapply(wells_flip1, function(x){which(grouping == x)})
+  
+  wells_flip2 <- paste0(c(row_flip2), rep(cols, each = 1))
+  
+  wells_flip2 <- paste(cell, plate,wells_flip2)
+  
+  idx_flip2 <- sapply(wells_flip2, function(x){which(grouping == x)})
+  
+  save_data_flip1 <- lapply(idx_flip1, function(x) data[x,2:7])
+  
+  save_data_flip2 <- lapply(idx_flip2, function(x) data[x,2:7])
+  
+  for(idx in 1:length(idx_flip2)){
+    #idx = 2
+    data[idx_flip2[[idx]],2:7] <- save_data_flip1[[idx]]
+    
+    data[idx_flip1[[idx]],2:7] <- save_data_flip2[[idx]]
+  }
+  return(data)
+}
+
+
+
+# function to correct mistake when plate was pipetted upside down ---------
+
+
+invert_plate <- function(data, cell,plate, wells){
+  
+  data = data
+  
+  grouping <- paste(data$cell, data$source_plate,data$well384)
+  
+  wells <- paste(cell, plate, wells)
+  
+  well_matrix <- matrix(wells, ncol = 12,byrow = T)
+  
+  well_matrix_rev <- well_matrix
+  
+  rotate <- function(x) t(apply(x, 2, rev))
+  
+  well_matrix_rev <- t(rotate(well_matrix_rev))
+  
+  well_matrix_rev <- well_matrix_rev[,rev(1:ncol(well_matrix_rev))]
+  
+  for(idx in 1:(dim(well_matrix)[1]*dim(well_matrix)[2])){
+    
+    idx_flip1 <- which(grouping == well_matrix[idx])
+    idx_flip2 <- which(grouping == well_matrix_rev[idx])
+    
+    save_data_flip1 = data[idx_flip1,2:7]
+    save_data_flip2 = data[idx_flip2,2:7]
+    
+    if(nrow(save_data_flip2)==0){
+      data[idx_flip1,2:7] <- NA
+    }else{
+      data[idx_flip1,2:7] <- save_data_flip2
+    }
+    
+    if(nrow(save_data_flip1)==0){
+      data[idx_flip2,2:7] <- NA
+    }else{
+      data[idx_flip2,2:7] <- save_data_flip1
+    }
+  }
+  
+  return(data)
+}
+
 # mock result to play with ----------------------------------------------
 
 # tmp <-
