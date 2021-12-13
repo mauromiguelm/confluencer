@@ -159,8 +159,6 @@ conv_96_384 <- function(p1_96 = NULL,
 
 # function to plot 384 result  ------------------------------------------------------
 
-
-
 plot_384 <- function(plate384){
  
   png("plate.png", h = 400, w = 600)
@@ -307,18 +305,29 @@ invert_plate <- function(data, cell,plate, wells){
   return(data)
 }
 
-# mock result to play with ----------------------------------------------
 
-# tmp <-
-#   conv_96_384(p1_96 = plate1,
-#               p2_96 = plate2,
-#               p3_96 = plate3,
-#               p4_96 = plate4
-#   )
+# # get quadrant wells function -------------------------------------------
 
-
-#png("plate.png", h = 400, w = 600)
-# ggplot(tmp, aes(Col, factor(Row, levels = rev(levels(Row))), fill=factor(return_values))) + geom_raster() + ggtitle("384wp map of drugs")+
-#   geom_text(aes(label = return_values), size = 2.3)
-#dev.off()
-
+get_quadrant_wells= function(quadrant){
+  if(quadrant==1){
+    return(data.frame(q_384 = paste0(rep(LETTERS[1:16][c(T,F)], each = 12), seq(1,24,2)),
+                      wells_96 =  paste0(rep(LETTERS[1:8], each = 12), 1:12),
+                      stringsAsFactors = F))
+    
+  }else if(quadrant==2){
+    return(data.frame(q_384 = paste0(rep(LETTERS[1:16][c(T,F)], each = 12), seq(2,24,2)),
+                      wells_96 =  paste0(rep(LETTERS[1:8], each = 12), 1:12),
+                      stringsAsFactors = F)
+           
+    )
+  }else if(quadrant==3){
+    return(data.frame(q_384 = paste0(rep(LETTERS[1:16][c(F,T)], each = 12), seq(1,24,2)),
+                      wells_96 =  paste0(rep(LETTERS[1:8], each = 12), 1:12),
+                      stringsAsFactors = F))
+  }else if (quadrant==4){
+    
+    return(data.frame(q_384 = paste0(rep(LETTERS[1:16][c(F,T)], each = 12), seq(2,24,2)),
+                      wells_96 =  paste0(rep(LETTERS[1:8], each = 12), 1:12),
+                      stringsAsFactors = F))
+  }
+}
