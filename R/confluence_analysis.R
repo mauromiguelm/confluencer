@@ -32,7 +32,7 @@ Read_TecanData <- function(FileName,
 
   colnames(data.filtered)[1] <- "Well"
 
-  Tecan_data <- tidyr::gather(data.filtered, time, conf, -Well)
+  Tecan_data <- tidyr::gather(data.filtered, `time`, `conf`, -`Well`)
 
   Tecan_data <- Tecan_data[!is.na(Tecan_data$conf),]
 
@@ -48,7 +48,7 @@ Read_TecanData <- function(FileName,
 
     colnames(Map_tecan)[1] <- "Well"
 
-    dataset <- tidyr::inner_join(Tecan_data, Map_tecan, by = "Well")
+    dataset <- tidyr::inner_join(Tecan_data, Map_tecan, by = `Well`)
 
     dataset$time <- as.numeric(dataset$time)
 
@@ -109,10 +109,10 @@ Read_PlateMap <- function(FileName,
 
     data.filtered <- data.filtered[unlist(store_indexes),]
 
-    data.filtered <- tidyr::gather(data.filtered, row, cellline, -cell )
+    data.filtered <- tidyr::gather(data.filtered, `row`, `cellline`, -`cell`)
 
-    data.filtered <- data.filtered %>% dplyr::mutate(well_number = paste0(cell, row)) %>%
-      dplyr::select(well_number, cellline)
+    data.filtered <- data.filtered %>% dplyr::mutate(well_number = paste0(`cell`, `row`)) %>%
+      dplyr::select(`well_number`, `cellline`)
 
     Plate_annotations[,1] <- data.filtered$well_number[1: Plate_size]
 
@@ -160,10 +160,10 @@ Read_Tecan_M200 <- function(FileName_Tecan,
 
   data <- data[-1,]
 
-  data <- tidyr::gather(data, key = 'Well', value = "my_vals", -`<>`)
+  data <- tidyr::gather(data, key = `Well`, value = `my_vals`, -`<>`)
 
   data <- data %>%
-    tidyr::mutate(Well = paste0(`<>`, Well))%>%
+    tidyr::mutate(Well = paste0(`<>`, `Well`))%>%
     tidyr::select(-`<>`)
 
   data <- data[data$Well %in% unlist(lapply(LETTERS[1:8], function(x) paste(x, 1:12, sep=""))),]
@@ -172,14 +172,14 @@ Read_Tecan_M200 <- function(FileName_Tecan,
 
     std_curve <- openxlsx::read.xlsx(Plate_mapM200, colNames = T)
 
-    std_curve <- tidyr::gather(std_curve, key = "Well", value = "abs", -"std")
+    std_curve <- tidyr::gather(std_curve, key = `Well`, value = `abs`, -`std`)
 
     std_curve <- std_curve %>%
-      dplyr::mutate(Well = paste0("std", "Well"))%>%
+      dplyr::mutate(Well = paste0(`std`, `Well`))%>%
       dplyr::select(-1)%>%
       stats::na.omit()%>%
-      dplyr::inner_join(data, by = "Well")%>%
-      dplyr::mutate(my_vals = as.numeric(my_vals))
+      dplyr::inner_join(data, by = `Well`)%>%
+      dplyr::mutate(my_vals = as.numeric(`my_vals`))
 
       Tecan_data <- list()
 
@@ -284,7 +284,7 @@ ReadIncuCyteData <- function(FileName_IncuCyte,
 
   data$Well <- rownames(data)
 
-  data <- tidyr::gather(data, key = Time, value = Conf, -Well)
+  data <- tidyr::gather(data, key = `Time`, value = `Conf`, -`Well`)
 
   if(read_platemap == T){
 
@@ -348,7 +348,7 @@ filter_growth_outliers <- function(plate_name = NULL,
 
   data$Conf <- as.numeric(as.character(data$Conf))
 
-  data_384 = subset(data, "Time" <= time_control)
+  data_384 = subset(data, `Time` <= time_control)
 
   data_384.original = data
 
@@ -376,7 +376,7 @@ filter_growth_outliers <- function(plate_name = NULL,
 
   store_args$regression_metrics <- lapply(store_args$wells_origin, function(well) {
 
-    fit <- stats::lm("Conf"~"Time" ,data_384[data_384$Well == well,])
+    fit <- stats::lm(`Conf`~`Time` ,data_384[data_384$Well == well,])
 
     fit.summary <- base::summary(fit)
 

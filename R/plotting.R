@@ -5,12 +5,10 @@
 #' @return
 #' @export
 #' @examples
-plot_384 <- function(plate384){f
-
+plot_384 <- function(plate384){
   grDevices::png("plate.png", h = 400, w = 600)
-  ggplot2::ggplot(plate384, ggplot2::aes(Col, Row, fill=factor(return_values))) + ggplot2::geom_raster() + ggplot2::ggtitle("random Ct Data")
+  ggplot2::ggplot(plate384, ggplot2::aes(`Col`, `Row`, fill=factor(`return_values`))) + ggplot2::geom_raster() + ggplot2::ggtitle("random Ct Data")
   grDevices::dev.off()
-
   paste("384 layout image saved in:", getwd())
 
 }

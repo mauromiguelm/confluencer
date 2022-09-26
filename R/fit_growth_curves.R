@@ -48,7 +48,7 @@ get_growthMetrics <-
 
     growth_rates$tmp_time <-  seq(0,max(data[,1]),length.out = interpolated_points)
 
-    growth_rates$model <-stats::lm(Conf ~ poly(Time, degree), data = growth_rates$tmp_data_format)
+    growth_rates$model <-stats::lm(`Conf` ~ poly(`Time`, degree), data = growth_rates$tmp_data_format)
 
     growth_rates$pred_Conf <- stats::predict(growth_rates$model, newdata = data.frame(Time = growth_rates$tmp_time))
 
