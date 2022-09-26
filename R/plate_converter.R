@@ -169,7 +169,7 @@ conv_384_96 <- function(data_384){
 
     match_idx <- base::match(data_384[,1], as.character(dict_subset[,1]))
 
-    match_wells <-  dict_subset[base::na.omit(match_idx),]
+    match_wells <-  dict_subset[stats::na.omit(match_idx),]
 
     match_wells[,"quart"] = quart
 
