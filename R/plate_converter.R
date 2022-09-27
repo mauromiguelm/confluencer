@@ -294,24 +294,28 @@ invert_plate <- function(data, cell,plate, wells){
 #' @examples
 get_quadrant_wells= function(quadrant){
   if(quadrant==1){
-    return(data.frame(q_384 = paste0(rep(LETTERS[1:16][c(T,F)], each = 12), seq(1,24,2)),
-                      wells_96 =  paste0(rep(LETTERS[1:8], each = 12), 1:12),
+    return(data.frame(quadrant = 1,
+                      well384 = paste0(rep(LETTERS[1:16][c(T,F)], each = 12), seq(1,24,2)),
+                      well96 =  paste0(rep(LETTERS[1:8], each = 12), 1:12),
                       stringsAsFactors = F))
 
   }else if(quadrant==2){
-    return(data.frame(q_384 = paste0(rep(LETTERS[1:16][c(T,F)], each = 12), seq(2,24,2)),
-                      wells_96 =  paste0(rep(LETTERS[1:8], each = 12), 1:12),
+    return(data.frame(quadrant = 2,
+                      well384 = paste0(rep(LETTERS[1:16][c(T,F)], each = 12), seq(2,24,2)),
+                      well96 =  paste0(rep(LETTERS[1:8], each = 12), 1:12),
                       stringsAsFactors = F)
 
     )
   }else if(quadrant==3){
-    return(data.frame(q_384 = paste0(rep(LETTERS[1:16][c(F,T)], each = 12), seq(1,24,2)),
-                      wells_96 =  paste0(rep(LETTERS[1:8], each = 12), 1:12),
+    return(data.frame(quadrant = 3,
+                      well384 = paste0(rep(LETTERS[1:16][c(F,T)], each = 12), seq(1,24,2)),
+                      well96 =  paste0(rep(LETTERS[1:8], each = 12), 1:12),
                       stringsAsFactors = F))
   }else if (quadrant==4){
 
-    return(data.frame(q_384 = paste0(rep(LETTERS[1:16][c(F,T)], each = 12), seq(2,24,2)),
-                      wells_96 =  paste0(rep(LETTERS[1:8], each = 12), 1:12),
+    return(data.frame(quadrant = 4,
+                      well384 = paste0(rep(LETTERS[1:16][c(F,T)], each = 12), seq(2,24,2)),
+                      well96 =  paste0(rep(LETTERS[1:8], each = 12), 1:12),
                       stringsAsFactors = F))
   }
 }
