@@ -82,13 +82,13 @@ get_growthMetrics <-
 
     id <- order(growth_rates$tmp_time)
 
-    growth_rates$AUC_deriv <- sum(diff(growth_rates$tmp_time[id])*rollmean(growth_rates$tmp_growth_rate$deriv[id],2))
+    growth_rates$AUC_deriv <- sum(diff(growth_rates$tmp_time[id])*zoo::rollmean(growth_rates$tmp_growth_rate$deriv[id],2))
 
     # calculate the area under the curve (AUC or integral) of growth curve
 
     id <- order(growth_rates$tmp_time)
 
-    growth_rates$AUC_GR <- sum(diff(growth_rates$tmp_time[id])*rollmean(growth_rates$tmp_growth_rate$GR[id],2))
+    growth_rates$AUC_GR <- sum(diff(growth_rates$tmp_time[id])*zoo::rollmean(growth_rates$tmp_growth_rate$GR[id],2))
 
     # output Data
 
